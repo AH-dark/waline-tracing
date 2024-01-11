@@ -1,0 +1,49 @@
+name: ahdark-comment-waline
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+
+services:
+  waline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8360:8360"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DB: waline
+      MYSQL_USER: waline
+      MYSQL_PASSWORD: waline
+      OTEL_EXPORTER_OTLP_PROTOCOL: http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  mysql:
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: waline
+      MYSQL_USER: waline
+      MYSQL_PASSWORD: waline
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      - "16686:16686"
+    networks:
+      - app-network
