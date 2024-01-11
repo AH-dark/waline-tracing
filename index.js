@@ -22,9 +22,8 @@ const {
 
 const resource = Resource.default().merge(
   new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: process.env.SERVICE_NAME || "ahdark-comment-waline",
-    [SemanticResourceAttributes.SERVICE_NAMESPACE]:
-      process.env.SERVICE_NAMESPACE || "ahdark-comment",
+    [SemanticResourceAttributes.SERVICE_NAME]: process.env.SERVICE_NAME || "waline",
+    [SemanticResourceAttributes.SERVICE_NAMESPACE]: process.env.SERVICE_NAMESPACE || "comment",
   }),
 );
 
