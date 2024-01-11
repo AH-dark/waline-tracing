@@ -14,13 +14,17 @@ const {
 const {
   OTLPTraceExporter: OTLPHTTPTraceExporter,
 } = require("@opentelemetry/exporter-trace-otlp-http");
+const {
+  AlwaysOnSampler,
+  AlwaysOffSampler,
+  TraceIdRatioBasedSampler,
+} = require("@opentelemetry/sdk-trace-base");
 
 const resource = Resource.default().merge(
   new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: process.env.SERVICE_NAME || "ahdark-comment-waline",
     [SemanticResourceAttributes.SERVICE_NAMESPACE]:
       process.env.SERVICE_NAMESPACE || "ahdark-comment",
-    [SemanticResourceAttributes.WEBENGINE_NAME]: "Vercel",
   }),
 );
 
@@ -38,6 +42,7 @@ const exporter = (() => {
   }
 })();
 
+/** @type {import("@opentelemetry/sdk-trace-base").BatchSpanProcessor} */
 const spanProcessor = new BatchSpanProcessor(exporter, {
   maxQueueSize: parseInt(process.env.OTEL_BSP_MAX_QUEUE_SIZE) || 1000,
   maxExportBatchSize: parseInt(process.env.OTEL_BSP_MAX_EXPORT_BATCH_SIZE) || 1000,
@@ -45,10 +50,24 @@ const spanProcessor = new BatchSpanProcessor(exporter, {
   exportTimeoutMillis: parseInt(process.env.OTEL_BSP_EXPORT_TIMEOUT_MILLIS) || 30000,
 });
 
+/** @type {import("@opentelemetry/sdk-trace-base").Sampler}*/
+const sampler = (() => {
+  const radio = parseFloat(process.env.OTEL_TRACES_SAMPLER_RADIO || "1.0");
+  switch (radio) {
+    case 0:
+      return new AlwaysOffSampler();
+    case 1:
+      return new AlwaysOnSampler();
+    default:
+      return new TraceIdRatioBasedSampler(radio);
+  }
+})();
+
 /** @type {NodeSDK} */
 const sdk = new NodeSDK({
   spanProcessor,
   resource,
+  sampler,
   autoDetectResources: true,
   resourceDetectors: [envDetector, hostDetector, processDetector],
   instrumentations: [getNodeAutoInstrumentations()],
