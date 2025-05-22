@@ -10,7 +10,7 @@ WORKDIR /app
 
 FROM base AS prod
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --force
 
 EXPOSE 8360
 ENTRYPOINT ["pnpm", "start"]
